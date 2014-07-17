@@ -1,1 +1,3 @@
 This is a C++ project to triangulate a 2D domain using Advancing Front Method. This project is still in progress because optimization of the code is still not done. The work done so far is to make sure that the algorithm implementation is working properly. Currently, two projects are added, one for a circular domain and another for a rectangular domain. A third project is going to be added for a somewhat more arbitrary 2D domain.
+
+This triangulation method may be used for mesh generation used in CFD and FEM. Currently the code is able to handle singly connected domains. Class additions to handle multiply connected domains will be done soon. 
