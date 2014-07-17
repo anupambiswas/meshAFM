@@ -109,7 +109,7 @@ void mesh::circumcentre(double *xv,double *yv,int i,int j,int k,double& xc,doubl
 
 void mesh::collapse()
 {
-  std::cout<<"\nStarting ring collapse ...";
+  std::cout<<"\nStarting ring collapse ...\n";
   int i,j,k;
 
   int bef,aft;

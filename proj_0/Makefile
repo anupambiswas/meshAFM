@@ -4,4 +4,6 @@ clean:
 	rm -f *~
 resetf:
 	rm -f *~ pdata bdata run
+	rm -rf results
+
 
