@@ -2,6 +2,7 @@
 
 mesh::mesh(int nP,int nBP,double *xv,double *yv)
 {
+  pi=4.0*atan(1.0);
   nPoints=nP;
   nBPoints=nBP;
   nFaces=10000; // will be corrected
@@ -109,6 +110,8 @@ void mesh::circumcentre(double *xv,double *yv,int i,int j,int k,double& xc,doubl
 
 void mesh::collapse()
 {
+  //printAngles();return;
+  //test();
   std::cout<<"\nStarting ring collapse ...\n";
   int i,j,k;
 
@@ -136,7 +139,8 @@ void mesh::collapse()
 	{
 	  if(touched[j])continue;
 	  if(j==cur->id || j==cur->next->id)continue;
-	  //if(distance(x,y,cur->id,j)>maxd)continue;//replaced by following line
+	  if(!checkCorner(cur->next->id,bef,cur->id,j))continue;
+	  if(!checkCorner(aft,cur->id,cur->next->id,j))continue;
 	  if(distance(x[cur->id],y[cur->id],x[j],y[j])>maxDis)continue;
 	  code_B;
 	  if(jStat)
@@ -291,7 +295,7 @@ void mesh::makeAnim(std::string name,std::string tim)
   F.open(name.c_str(),std::ios::out);
   F<<"set size ratio 1\nset xrange ["<<xmin<<":"<<xmax<<"]\nset yrange ["<<ymin<<":"<<ymax<<"]\n";
   for(int i=0;i<=numIter;i++)
-    F<<"p '"<<fileName("FL",i)<<"' w l,'"<<fileName("RN",i)<<"' w l;pause "<<tim<<"\n";
+    F<<"p 'results/"<<fileName("FL",i)<<"' w l,'results/"<<fileName("RN",i)<<"' w l;pause "<<tim<<"\n";
   F.close();
 }
 
@@ -303,3 +307,201 @@ void mesh::setDomainBounds(double xmn,double xmx,double ymn,double ymx)
   ymax=ymx;
   std::cout<<"\nSetting Domain bounds: xmin = "<<xmin<<" xmax = "<<xmax<<" ymin = "<<ymin<<" ymax = "<<ymax<<"\n\n";
 }
+
+double mesh::getAngle(double xp,double yp)
+{
+  if(xp==0 && yp==0)
+    {
+      std::cout<<"\nInderminate point (0. 0). Terminating from getAngle.\n\n";
+      exit(0);
+    }
+  double tht=atan(fabs(yp)/fabs(xp));
+  if(xp>0.0)
+    {
+      if(yp>=0.0)
+	return(tht);
+      else
+	return(2.0*pi-tht);
+    }
+  else
+    {
+      if(yp>0.0)
+	return(pi-tht);
+      else
+	return(pi+tht);
+    }
+}
+
+bool mesh::isWithinCorner(double xf,double yf,double xb,double yb,double xo,double yo,double xp,double yp)
+{
+  double xdf=xf-xo;
+  double ydf=yf-yo;
+  double xdb=xb-xo;
+  double ydb=yb-yo;
+  double xdp=xp-xo;
+  double ydp=yp-yo;
+  double thtf=getAngle(xdf,ydf);
+  double thtb=getAngle(xdb,ydb);
+  double thtp=getAngle(xdp,ydp);
+
+  bool cond;
+  cond=(thtf<thtb && thtp>thtf && thtp<thtb) || (thtf>thtb && (thtp>thtf || thtp<thtb));
+
+  return(cond);
+}
+
+bool mesh::checkCorner(int nxt,int prv,int cur,int pid)
+{
+  //std::cout<<"\ncheckCorner("<<nxt<<","<<prv<<","<<cur<<","<<pid<<")\n\n";
+  return(isWithinCorner(x[nxt],y[nxt],x[prv],y[prv],x[cur],y[cur],x[pid],y[pid]));
+}
+
+void mesh::printAngles()
+{
+  srand(time(NULL));
+  double rad,tht;
+  bool cond;
+  std::fstream F;
+
+  double tht0,tht1;
+  tht0=rand()/(RAND_MAX+1.0)*2*pi;
+  tht1=rand()/(RAND_MAX+1.0)*2*pi;
+  std::cout<<"\nFirst Angle = "<<tht0*180.0/pi<<"\n";
+  std::cout<<"Second angle = "<<tht1*180.0/pi<<"\n\n";
+  F.open("bounds",std::ios::out);
+  F<<cos(tht0)<<" "<<sin(tht0)<<"\n";
+  F<<"0 0\n";
+  F<<cos(tht1)<<" "<<sin(tht1)<<"\n";
+  F.close();
+
+  double xb,yb,xf,yf;
+  xf=cos(tht0);
+  yf=sin(tht0);
+  xb=cos(tht1);
+  yb=sin(tht1);
+
+  F.open("points",std::ios::out);
+  for(int i=0;i<1000;i++)
+    {
+      rad=rand()/(RAND_MAX+1.0);
+      tht=rand()/(RAND_MAX+1.0)*2*pi;
+      if(isWithinCorner(xf,yf,xb,yb,0,0,rad*cos(tht),rad*sin(tht)))
+	F<<rad*cos(tht)<<" "<<rad*sin(tht)<<"\n";
+    }
+  F.close();
+
+  return;
+
+  // std::cout<<pi<<"\n";
+  // std::fstream F("angf",std::ios::out);
+  // std::fstream G("angb",std::ios::out);
+  // std::fstream H("ang",std::ios::out);
+  // int cnt=0;
+  // ring *cur=rng;
+  // double angf,angb;
+  // do
+  //   {
+  //     angf=getAngle(x[cur->next->id]-x[cur->id],y[cur->next->id]-y[cur->id])*180.0/pi;
+  //     angb=getAngle(x[cur->prev->id]-x[cur->id],y[cur->prev->id]-y[cur->id])*180.0/pi;
+  //     F<<cnt<<" "<<angf<<"\n";
+  //     G<<cnt<<" "<<angb<<"\n";
+  //     H<<cnt<<"     "<<angf<<"     "<<angb<<"\n";
+  //     cur=cur->next;
+  //     cnt++;
+  //   }
+  // while(cur!=rng);
+  // F.close();
+  // G.close();
+  // H.close();
+}
+
+bool mesh::isWithinDomain(int i,int j)
+{
+  if(i<nBPoints && j<nBPoints)
+    {
+      //std::cout<<"i = "<<i<<" and j = "<<j<<std::endl;
+      int nxt,prv;
+      bool cond0,cond1;
+      nxt=i+1;
+      prv=i-1;
+      if(i==0)
+	prv=nBPoints-1;
+      if(i==nBPoints-1)
+	nxt=0;
+      //std::cout<<"one\n";
+      if(j==prv || j==nxt)return(true);
+      cond0=checkCorner(nxt,prv,i,j);
+      nxt=j+1;
+      prv=j-1;
+      if(j==0)
+	prv=nBPoints-1;
+      if(j==nBPoints-1)
+	nxt=0;
+      //if(i==prv || i==nxt)return(true);//not needed actually
+      cond1=checkCorner(nxt,prv,j,i);
+      //std::cout<<"two "<<cond0<<" "<<cond1<<"\n";
+      return(cond0 && cond1);
+    }
+  else if(i>=nBPoints && j>=nBPoints)
+    {
+      return(!checkIntersectionWithBoundary(i,j));
+    }
+  else
+    {
+      return(!checkIntersectionWithBoundary(i,j,true));
+    }
+}
+
+// void mesh::convertToLine(double x0,double y0,double x1,double y1,double& a,double& b,double& c)
+// {
+//   a=y1-y0;
+//   b=x0-x1;
+//   c=x1*y0-x0*y1;
+// }
+
+bool mesh::checkIntersectionWithBoundary(int i,int j,bool cond)
+{
+  int k,nxt;
+  for(k=0;k<nBPoints;k++)
+    {
+      nxt=k+1;
+      if(k==nBPoints-1)
+	nxt=0;
+      if(cond)
+	if(nxt==i || nxt==j || k==i || k==j)
+	  continue;
+      if(checkIntersectionOfLines(i,j,k,nxt))
+	return(true);
+    }
+  return(false);
+}
+
+bool mesh::checkIntersectionOfLines(int i00,int i01,int i10,int i11)
+{
+  double m[2];
+  double a[2][2];
+  double b[2];
+
+  a[0][0]=x[i01]-x[i00];
+  a[0][1]=x[i10]-x[i11];
+  a[1][0]=y[i01]-y[i00];
+  a[1][1]=y[i10]-y[i11];
+  b[0]=x[i10]-x[i00];
+  b[1]=y[i10]-y[i00];
+  double det=a[0][0]*a[1][1]-a[1][0]*a[0][1];
+  m[0]=(a[1][1]*b[0]-a[0][1]*b[1])/det;
+  m[1]=(-a[1][0]*b[0]+a[0][0]*b[1])/det;
+
+  if(m[0]>=0 && m[0]<=1 && m[1]>=0 && m[1]<=1)
+    return(true);
+  return(false);
+}
+
+// void mesh::test()
+// {
+//   if(isWithinDomain(36,38))
+//     std::cout<<"36 and 38 within domain\n";
+//   if(isWithinDomain(38,36))
+//     std::cout<<"38 and 36 within domain\n";
+//   exit(0);
+// }

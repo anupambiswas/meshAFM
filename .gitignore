@@ -1,4 +1,11 @@
 *~
 a.out
 run
+cdbug
+circ
+dyn
 results/*
+proj*/results/*
+pdata
+bdata
+test_and_debug/coco/*
