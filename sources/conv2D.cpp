@@ -1,46 +1,52 @@
-#include"../headers/conv2D.h"
+#include "../headers/conv2D.h"
 
 void conv2D::makeRing()
 {
-  std::string s=zName+"_vid";
+  std::string s = zName + "_vid";
   remove(s.c_str());
-  int i,nxt;
-  ringo=new polyr;
-  polyr *cur=ringo;
-  for(i=0;i<size;i++)
+  int i, nxt;
+  ringo = new polyr;
+  polyr *cur = ringo;
+  for(i = 0; i < size; i++)
+  {
+    nxt = i + 1;
+    if(i == size - 1)
     {
-      nxt=i+1;
-      if(i==size-1)
-	nxt=0;
-      computeLine(x[i],y[i],x[nxt],y[nxt],cur->a,cur->b,cur->c);
-      cur->id=i;
-      if(i<size-1)
-	cur->next=new polyr;
-      else
-	cur->next=ringo;
-      cur=cur->next;
+      nxt = 0;
     }
+    computeLine(x[i], y[i], x[nxt], y[nxt], cur->a, cur->b, cur->c);
+    cur->id = i;
+    if(i < size - 1)
+    {
+      cur->next=new polyr;
+    }
+    else
+    {
+      cur->next=ringo;
+    }
+    cur=cur->next;
+  }
 }
 
 void conv2D::decomposeRing()
 {
-  polyr *befStart,*start,*end,*ins,*befEnd,*startNew,*endNew;
+  polyr *befStart, *start, *end, *ins, *befEnd, *startNew, *endNew;
   int numSE;
-  double xcenSE,ycenSE,xcenSI,ycenSI;
-  double a,b,c;
+  double xcenSE, ycenSE, xcenSI, ycenSI;
+  double a, b, c;
   bool insStat;
-  double x0,y0,x1,y1;
-  polyr *cur,*cur2;
+  double x0, y0, x1, y1;
+  polyr *cur, *cur2;
   int dec;
 
-  befStart=ringo;
-  start=befStart->next;
-  befEnd=start;
-  end=start->next;
-  numSE=2;
-  xcenSE=0.5*(x[start->id]+x[end->id]);
-  ycenSE=0.5*(y[start->id]+y[end->id]);
-  ins=NULL;
+  befStart = ringo;
+  start = befStart->next;
+  befEnd = start;
+  end = start->next;
+  numSE = 2;
+  xcenSE = 0.5 * (x[start->id] + x[end->id]);
+  ycenSE = 0.5 * (y[start->id] + y[end->id]);
+  ins = NULL;
 
   while(1)
     {
